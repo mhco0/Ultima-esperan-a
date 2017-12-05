@@ -742,10 +742,28 @@ void getJogador(int id, JOGADORES *jogadorNovo, char nome[20]){
 
 	jogadorNovo->vida=1;
 
-	srand((unsigned)time(NULL));
+	switch(jogadorNovo->id){
+			case 0:
+				jogadorNovo->x=30;
+				jogadorNovo->y=30;
+			break;
+			case 1:
+				jogadorNovo->x=MAXTRIZ-30;
+				jogadorNovo->y=MAXTRIZ-30;
+			break;
+			case 2:
+				jogadorNovo->x=30;
+				jogadorNovo->y=MAXTRIZ-30;
+			break;
+			case 3:
+				jogadorNovo->x=MAXTRIZ-30;
+				jogadorNovo->y=30;
+			break;
+			default:puts("Tivemos um erro inesperado.");
+					exit(EXIT_FAILURED);
+			break;
+	}
 
-	jogadorNovo->x=rand()%MAXTRIZ-1;
-	jogadorNovo->y=rand()%MAXTRIZ-1;
 	jogadorNovo->x_old=jogadorNovo->x;
 	jogadorNovo->y_old=jogadorNovo->y;
 
@@ -1271,8 +1289,3 @@ int main(void){
 
 	return 0;
 }
-
-
-
-
-
