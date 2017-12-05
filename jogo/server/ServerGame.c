@@ -147,13 +147,13 @@ void validar_os_movimentos(JOGADORES*jogadores,char matriz[MAXTRIZ][MAXTRIZ]){
 
 		if(jogadores[linha].x <= 5){
 			if(jogadores[linha].y>184 && jogadores[linha].y < 210){
-				jogadores[linha].x = MAXTRIZ-1;
+				jogadores[linha].x = MAXTRIZ-6;
 			}
 		}
 
-		if(jogadores[linha].x > MAXTRIZ-5){
+		if(jogadores[linha].x > MAXTRIZ-6){
 			if(jogadores[linha].y>184 && jogadores[linha].y < 210){
-				jogadores[linha].x = 0;
+				jogadores[linha].x = 5;
 			}
 		}
 		
