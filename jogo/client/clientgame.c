@@ -48,8 +48,9 @@
 #define VEL 10
 
 #define FRAMEDELAY 8
+#define RANG 4
 
-#define MAX_PLAYERS 2
+#define MAX_PLAYERS 4
 
 typedef struct JOGADORES{
 
@@ -727,6 +728,7 @@ int main(void){
 
 		aux=recvMsgFromServer(playerss,WAIT_FOR_IT);
 			if(aux==SERVER_DISCONNECTED){
+				exit(EXIT_FAILURED);
 				return 9;
 			}else{
 				if(aux==NO_MESSAGE){
@@ -741,6 +743,7 @@ int main(void){
 		recvMsgFromServer(&vitoria,WAIT_FOR_IT);
 
 		if(!vitoria){
+			exit(EXIT_SUCCESS);
 			return 8;
 		}
 

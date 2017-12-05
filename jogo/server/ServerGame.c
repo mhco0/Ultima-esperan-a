@@ -5,6 +5,7 @@
 #include <time.h>
 #include <ctype.h>
 #include <math.h>
+#include <stdbool.h>
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_primitives.h>
 #include <allegro5/allegro_image.h>
@@ -31,8 +32,9 @@
 #define VEL 10
 
 #define FRAMEDELAY 8
+#define RANG 7
 
-#define MAX_PLAYERS 2
+#define MAX_PLAYERS 4
 
 
 typedef struct JOGADORES{
@@ -77,18 +79,31 @@ void quem_eh_a_cazeh(JOGADORES * player){
 	
 }
 
-void rand_move(JOGADORES * player,char matriz[MAXTRIZ][MAXTRIZ]){
+void rand_move(JOGADORES * player){
 	register int linha;
 	srand((unsigned)time(NULL));
 
 	for(linha=0;linha<MAX_PLAYERS;linha++){
-		player[linha].x=rand()%MAXTRIZ;
-		player[linha].y=rand()%MAXTRIZ;
-		if(matriz[player[linha].y][player[linha].x] == 1){
-			do{
-				player[linha].x=rand()%MAXTRIZ;
-				player[linha].y=rand()%MAXTRIZ;
-			}while(matriz[player[linha].y][player[linha].x] == 1);
+		switch(player[linha].id){
+			case 0:
+				player[linha].x=30;
+				player[linha].y=30;
+			break;
+			case 1:
+				player[linha].x=MAXTRIZ-30;
+				player[linha].y=MAXTRIZ-30;
+			break;
+			case 2:
+				player[linha].x=30;
+				player[linha].y=MAXTRIZ-30;
+			break;
+			case 3:
+				player[linha].x=MAXTRIZ-30;
+				player[linha].y=30;
+			break;
+			default:puts("Tivemos um erro inesperado.");
+					exit(EXIT_FAILURED);
+			break;
 		}
 	}
 
@@ -119,22 +134,25 @@ void initMatriz(char matriz[MAXTRIZ][MAXTRIZ]){
 void validar_os_movimentos(JOGADORES*jogadores,char matriz[MAXTRIZ][MAXTRIZ]){
 	register int linha;
 	for(linha=0;linha<MAX_PLAYERS;linha++){
-		if(matriz[jogadores[linha].y][jogadores[linha].x]==1){
-			if(matriz[jogadores[linha].y_old][jogadores[linha].x]==0){
+		if(matriz[jogadores[linha].y][jogadores[linha].x]=='1'){
+			if(matriz[jogadores[linha].y_old][jogadores[linha].x]=='0'){
 				jogadores[linha].y=jogadores[linha].y_old;
-			}else if(matriz[jogadores[linha].y][jogadores[linha].x_old]==0){
+			}else if(matriz[jogadores[linha].y][jogadores[linha].x_old]=='0'){
 				jogadores[linha].x=jogadores[linha].x_old;
+			}else{
+				jogadores[linha].y=jogadores[linha].y_old;
+				jogadores[linha].x=jogadores[linha].x_old;				
 			}
 		}
 
 		if(jogadores[linha].x < 0){
-			if(jogadores[linha].y>185 && jogadores[linha].y < 209){
+			if(jogadores[linha].y>184 && jogadores[linha].y < 210){
 				jogadores[linha].x = MAXTRIZ-1;
 			}
 		}
 
 		if(jogadores[linha].x > MAXTRIZ-1){
-			if(jogadores[linha].y>185 && jogadores[linha].y < 209){
+			if(jogadores[linha].y>184 && jogadores[linha].y < 210){
 				jogadores[linha].x = 0;
 			}
 		}
@@ -149,6 +167,7 @@ int organiza_quem_morreu(JOGADORES *jogadores){
 	int x_morte;
 	int y_morte;
 	static int mortes=0;
+	double distancia_morte;
 	//int venceu=0;
 
 
@@ -161,7 +180,10 @@ int organiza_quem_morreu(JOGADORES *jogadores){
 
 	for(linha=0;linha<MAX_PLAYERS;linha++){
 		if(jogadores[linha].comedor=='V'){
-			if(jogadores[linha].x==x_morte && jogadores[linha].y==y_morte && jogadores[linha].vida==1){
+
+			distancia_morte=sqrt(pow(jogadores[linha].x-x_morte,2)+pow(jogadores[linha].y-y_morte,2));
+
+			if(distancia_morte<RANG && jogadores[linha].vida==1){
 				jogadores[linha].vida=0;
 				mortes+=1;
 				disconnectClient(linha);
@@ -250,7 +272,7 @@ int main(void){
 
 	quem_eh_a_cazeh(player);
 
-	rand_move(player,matriz);
+	rand_move(player);
 
 	iniciarJogo(player);
 
@@ -270,7 +292,7 @@ int main(void){
 				quem_eh_a_cazeh(player);
 			}
 
-			broadcast(player,2*sizeof(JOGADORES));
+			broadcast(player,4*sizeof(JOGADORES));
 
 			if(mortes==MAX_PLAYERS-1){
 				vitoria=0;
