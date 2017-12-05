@@ -44,7 +44,7 @@ typedef struct JOGADORES{
 	int frameCount;
 	int maxFrame;
 
-	char nome;
+	char nome[20];
 	int x_old;
 	int y_old;
 	int x;
@@ -112,7 +112,7 @@ void rand_move(JOGADORES * player){
 void initMatriz(char matriz[MAXTRIZ][MAXTRIZ]){
 	register int linha=0,coluna=0;
 	FILE * arq;
-	arq=fopen("jogo/client/imagem/mapa.txt","rt");
+	arq=fopen("jogo/client/midia/mapa.txt","rt");
 	if(arq==NULL){
 		puts("Nao conseguimos acessar o arquivo da matriz");
 		exit(EXIT_FAILURED);

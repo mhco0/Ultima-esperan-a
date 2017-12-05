@@ -6,7 +6,7 @@ CC := gcc -std=c99
 RM := rm -f
 MK := mkdir -p
 CFLAGS := -Wall -Werror -Wconversion -Wextra
-LDLIB := -lm -lallegro -lallegro_image -lallegro_font -lallegro_ttf -lallegro_primitives 
+LDLIB := -lm -lallegro -lallegro_image -lallegro_font -lallegro_ttf -lallegro_primitives -lallegro_dialog -lallegro_acodec -lallegro_audio
 
 OUTPUTDIR := bin
 LIBDIR := lib
