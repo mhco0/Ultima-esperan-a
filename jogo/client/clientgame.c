@@ -92,7 +92,7 @@ ALLEGRO_SAMPLE *mainFakeAudio=NULL, *fundoSound=NULL;
 
 ALLEGRO_TIMER *timer = NULL;
 
-ALLEGRO_FONT *fonte1 = NULL, *fonte2 = NULL;
+ALLEGRO_FONT *fonte1 = NULL, *fonte2 = NULL, *fonte3=NULL;
 
 ALLEGRO_DISPLAY *Janela = NULL;
 
@@ -219,6 +219,8 @@ void initFontes(){
 	fonte1 = al_load_font("jogo/client/midia/SimsLLHP.ttf", 30, 0);
 
 	fonte2 = al_load_font("jogo/client/midia/SimsLLHP.ttf", 25, 0);
+
+	fonte3 = al_load_font("jogo/client/midia/SimsLLHP.ttf", 15, 0);
 }
 
 void initAudios(){
@@ -909,7 +911,9 @@ int selecionarPersonagem(int id, JOGADORES *jogadorNovo){
 			}else if(vary==0){
 				al_draw_bitmap_region(Cazeh,14,42,tamanhox,tamanhoy,(float)playerss[linha].x,(float)playerss[linha].y,0);				
 			}
-
+		}
+		if(playerss[linha].vida == 1) {
+			al_draw_text(fonte3, al_map_rgb(255, 255, 255), (float)playerss[linha].x, (float)playerss[linha].y-15, ALLEGRO_ALIGN_CENTRE, playerss[linha].nome);
 		}
 
 	}
