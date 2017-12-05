@@ -4,6 +4,15 @@
 #include "server.h"
 #include <time.h>
 #include <ctype.h>
+#include <math.h>
+#include <allegro5/allegro.h>
+#include <allegro5/allegro_primitives.h>
+#include <allegro5/allegro_image.h>
+#include <allegro5/allegro_audio.h>
+#include <allegro5/allegro_acodec.h>
+#include <allegro5/allegro_font.h>
+#include <allegro5/allegro_ttf.h>
+#include <allegro5/allegro_native_dialog.h>
 
 #ifndef EXIT_SUCCESS
  	#define EXIT_SUCCESS 0
@@ -17,10 +26,22 @@
 #define APT 50
 #define NOME_MAX 255
 
+#define FPS 60
+
+#define VEL 10
+
+#define FRAMEDELAY 8
+
 #define MAX_PLAYERS 2
 
 
 typedef struct JOGADORES{
+
+	ALLEGRO_BITMAP *sprite;
+	int curFrame;
+	int frameCount;
+	int maxFrame;
+
 	char nome;
 	int x_old;
 	int y_old;
@@ -56,7 +77,7 @@ void quem_eh_a_cazeh(JOGADORES * player){
 	
 }
 
-void rand_move(JOGADORES * player, matriz[MAXTRIZ][MAXTRIZ]){
+void rand_move(JOGADORES * player,char matriz[MAXTRIZ][MAXTRIZ]){
 	register int linha;
 	srand((unsigned)time(NULL));
 
@@ -229,7 +250,7 @@ int main(void){
 
 	quem_eh_a_cazeh(player);
 
-	rand_move(player);
+	rand_move(player,matriz);
 
 	iniciarJogo(player);
 

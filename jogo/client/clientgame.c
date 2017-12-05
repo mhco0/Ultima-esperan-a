@@ -5,6 +5,7 @@
 #include <time.h>
 #include <ctype.h>
 #include <math.h>
+#include <stdbool.h>
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_primitives.h>
 #include <allegro5/allegro_image.h>
@@ -36,14 +37,27 @@
 	#define SERVER_TIMEOUT 4
 #endif
 
+
 #define MAXTRIZ 420
 #define MAXIP 20
 #define APT 50
 #define NOME_MAX 255
 
+#define FPS 60
+
+#define VEL 10
+
+#define FRAMEDELAY 8
+
 #define MAX_PLAYERS 2
 
 typedef struct JOGADORES{
+
+	ALLEGRO_BITMAP * sprite;
+	int curFrame;
+	int frameCount;
+	int maxFrame;
+
 	char nome;
 	int x_old;
 	int y_old;
@@ -62,53 +76,95 @@ enum conn_ret_t testconnect(void){
 	return connectToServer(ip);
 }
 
-ALLEGRO_DISPLAY * janela=NULL;
+enum KEYS{W,A,S,D};
 
-// ALLEGRO_BITMAP * Cazeh=NULL, * player1=NULL,* player2=NULL,* player3=NULL, * player4=NULL;
- ALLEGRO_BITMAP * Fundo=NULL;
+bool key[4]={false,false,false,false};
+
+ALLEGRO_DISPLAY * Janela=NULL;
+
+ALLEGRO_BITMAP * Cazeh=NULL;
+ALLEGRO_BITMAP * Fundo=NULL;
+
+ALLEGRO_EVENT_QUEUE * fila_keyboard=NULL;
+
+ALLEGRO_TIMER * Timer=NULL;
+
+ALLEGRO_EVENT ev;
+
 
 void Carregar_bitmaps(void){
 	Fundo=al_load_bitmap("jogo/client/imagem/mapalimpo.png");
 	if(Fundo==NULL){
 		puts("Tivemos um problema ao alocar o Fundo.");
-		exit(-1);
+		exit(EXIT_FAILURED);
 	}
+	Cazeh=al_load_bitmap("jogo/client/imagem/PAC.png");
+	if(Cazeh==NULL){
+		puts("Tivemos um problema ao alocar a Cazeh.");
+		exit(EXIT_FAILURED);
+	}
+
+	al_convert_mask_to_alpha(Cazeh,al_map_rgb(255,0,255));
 }
 
 void Destruir(void){
-	al_destroy_display(janela);
+	al_destroy_display(Janela);
+	al_destroy_event_queue(fila_keyboard);
 }
 
 void InicializarAllegro(void){
 	if(!al_init()){
 		puts("Tivemos um erro em inicializar a Allegro5.");
-		exit(-1);	
+		exit(EXIT_FAILURED);	
 	}
 
 	if(!al_init_image_addon()){
 		puts("Tivemos um erro em iniciar imagens da Allegro5");
-		exit(-1);
+		exit(EXIT_FAILURED);
 	}
 	// al_install_audio();
 	// al_init_acodec_addon();
 	// al_reserve_samples(1);
 	// al_init_font_addon();
 	// al_init_ttf_addon();
-	// al_install_keyboard();
+	if(!al_install_keyboard()){
+		puts("Tivemos um erro ao instalar o keyboard");
+		exit(EXIT_FAILURED);
+	}
 	// al_install_mouse();
 	// al_init_primitives_addon();
 }
 
+void Registra_timer(void){
+	Timer=al_create_timer(1.0/FPS);
+}
+
+
+void Registra_fila_keyboard(void){
+
+	fila_keyboard=al_create_event_queue();
+	if(fila_keyboard==NULL){
+		puts("Tivemos um problema em criar a fila_keyboard");
+		exit(EXIT_FAILURED);
+	}
+
+	al_register_event_source(fila_keyboard,al_get_timer_event_source(Timer));
+	al_register_event_source(fila_keyboard,al_get_keyboard_event_source());
+	al_register_event_source(fila_keyboard,al_get_display_event_source(Janela));
+	
+	al_start_timer(Timer);
+}
+
 void InitJanela(void){
 
-	janela = al_create_display(MAXTRIZ, MAXTRIZ);
+	Janela = al_create_display(MAXTRIZ, MAXTRIZ);
 
-	if(janela==NULL){
+	if(Janela==NULL){
 		puts("Janela nao alocada");
 		exit(-1);
 	}
 
-	al_set_window_title(janela, "Last Hope");
+	al_set_window_title(Janela, "Last Hope");
 
 	al_clear_to_color(al_map_rgb(0, 0, 0));
 	al_draw_bitmap(Fundo,0,0,0);
@@ -262,6 +318,73 @@ char getNome(void){
 	return nome;
 }
 
+void load_sprite(JOGADORES *jogadorNovo){
+		switch(jogadorNovo->id){
+		case 0:jogadorNovo->sprite=al_load_bitmap("jogo/client/imagem/vermelho.png");
+			if(jogadorNovo->sprite==NULL){
+				puts("Tivemos um problema em carregar o bitmap vermelho");
+				exit(EXIT_FAILURED);
+			}
+		break;
+		case 1:jogadorNovo->sprite=al_load_bitmap("jogo/client/imagem/verde.png");
+			if(jogadorNovo->sprite==NULL){
+				puts("Tivemos um problema em carregar o bitmap verde");
+				exit(EXIT_FAILURED);
+			}
+		break;
+		case 2:jogadorNovo->sprite=al_load_bitmap("jogo/client/imagem/roxo.png");
+			if(jogadorNovo->sprite==NULL){
+				puts("Tivemos um problema em carregar o bitmap roxo");
+				exit(EXIT_FAILURED);
+			}
+		break;
+		case 3:jogadorNovo->sprite=al_load_bitmap("jogo/client/imagem/azul.png");
+			if(jogadorNovo->sprite==NULL){
+				puts("Tivemos um problema em carregar o bitmap azul");
+				exit(EXIT_FAILURED);
+			}
+		break;
+		default:puts("Aconteceu um erro inesperado.");
+				exit(EXIT_FAILURED);
+		break;
+	}
+	al_convert_mask_to_alpha(jogadorNovo->sprite,al_map_rgb(255,0,255));
+}
+
+
+void load_sprite2(JOGADORES *jogadorNovo,int linha){
+	printf("%d\n",jogadorNovo[linha].id );
+	switch(jogadorNovo[linha].id){
+		case 0:jogadorNovo[linha].sprite=al_load_bitmap("jogo/client/imagem/vermelho.png");
+			if(jogadorNovo[linha].sprite==NULL){
+				puts("Tivemos um problema em carregar o bitmap vermelho");
+				exit(EXIT_FAILURED);
+			}
+		break;
+		case 1:jogadorNovo[linha].sprite=al_load_bitmap("jogo/client/imagem/verde.png");
+			if(jogadorNovo[linha].sprite==NULL){
+				puts("Tivemos um problema em carregar o bitmap verde");
+				exit(EXIT_FAILURED);
+			}
+		break;
+		case 2:jogadorNovo[linha].sprite=al_load_bitmap("jogo/client/imagem/roxo.png");
+			if(jogadorNovo[linha].sprite==NULL){
+				puts("Tivemos um problema em carregar o bitmap roxo");
+				exit(EXIT_FAILURED);
+			}
+		break;
+		case 3:jogadorNovo[linha].sprite=al_load_bitmap("jogo/client/imagem/azul.png");
+			if(jogadorNovo[linha].sprite==NULL){
+				puts("Tivemos um problema em carregar o bitmap azul");
+				exit(EXIT_FAILURED);
+			}
+		break;
+		default:puts("Aconteceu um erro inesperado.");
+				exit(EXIT_FAILURED);
+		break;
+	}
+	al_convert_mask_to_alpha(jogadorNovo[linha].sprite,al_map_rgb(255,0,255));
+}
 void getJogador(int id, JOGADORES *jogadorNovo){
 
 	jogadorNovo->id=id;
@@ -278,6 +401,14 @@ void getJogador(int id, JOGADORES *jogadorNovo){
 	jogadorNovo->y=rand()%MAXTRIZ-1;
 	jogadorNovo->x_old=jogadorNovo->x;
 	jogadorNovo->y_old=jogadorNovo->y;
+
+	load_sprite(jogadorNovo);
+
+	jogadorNovo->curFrame=0;
+	jogadorNovo->frameCount=0;
+	jogadorNovo->maxFrame=2;
+
+	
 }
 
 void selecionarPersonagem(int id, JOGADORES *jogadorNovo){
@@ -286,8 +417,129 @@ void selecionarPersonagem(int id, JOGADORES *jogadorNovo){
 
 }
 
+ void Printar_tela_over_power(JOGADORES * playerss){
+
+ 	float xinicial;
+	float tamanhox=14;
+	float tamanhoy=14;
+
+	int varx;
+	int vary;
+
+	//problema ta na alocação do bitmap
+
+	al_draw_bitmap(Fundo,0,0,0);
+
+	register int linha;
+
+	for(linha=0;linha<MAX_PLAYERS;linha++){
+
+		varx=playerss[linha].x-playerss[linha].x_old;
+		vary=playerss[linha].y-playerss[linha].y_old;
+
+		xinicial=(float)playerss[linha].curFrame*14;
+
+		load_sprite2(playerss, linha);
+
+
+		if(playerss[linha].comedor=='V' && playerss[linha].vida){
+			if(varx>0){
+				al_draw_bitmap_region(playerss[linha].sprite,xinicial,0,tamanhox,tamanhoy,(float)playerss[linha].x,(float)playerss[linha].y,0);
+			}else if(vary==0){				
+				al_draw_bitmap_region(playerss[linha].sprite,14,0,tamanhox,tamanhoy,(float)playerss[linha].x,(float)playerss[linha].y,0);
+			}
+
+			if(varx<0){
+				al_draw_bitmap_region(playerss[linha].sprite,xinicial,14,tamanhox,tamanhoy,(float)playerss[linha].x,(float)playerss[linha].y,0);
+			}else if(vary==0){
+				al_draw_bitmap_region(playerss[linha].sprite,14,14,tamanhox,tamanhoy,(float)playerss[linha].x,(float)playerss[linha].y,0);				
+			}
+
+			if(vary<0){
+				al_draw_bitmap_region(playerss[linha].sprite,xinicial,28,tamanhox,tamanhoy,(float)playerss[linha].x,(float)playerss[linha].y,0);				
+			}else if(varx==0){
+				al_draw_bitmap_region(playerss[linha].sprite,14,28,tamanhox,tamanhoy,(float)playerss[linha].x,(float)playerss[linha].y,0);								
+			}
+
+			if(vary>0){
+				al_draw_bitmap_region(playerss[linha].sprite,xinicial,42,tamanhox,tamanhoy,(float)playerss[linha].x,(float)playerss[linha].y,0);				
+			}else if(vary==0){
+				al_draw_bitmap_region(playerss[linha].sprite,14,42,tamanhox,tamanhoy,(float)playerss[linha].x,(float)playerss[linha].y,0);				
+			}
+
+		}else if(playerss[linha].comedor == 'C' && playerss[linha].vida){
+
+
+			if(varx>0){
+				al_draw_bitmap_region(Cazeh,xinicial,0,tamanhox,tamanhoy,(float)playerss[linha].x,(float)playerss[linha].y,0);
+			}else if(vary==0){				
+				al_draw_bitmap_region(Cazeh,14,0,tamanhox,tamanhoy,(float)playerss[linha].x,(float)playerss[linha].y,0);
+			}
+
+			if(varx<0){
+				al_draw_bitmap_region(Cazeh,xinicial,14,tamanhox,tamanhoy,(float)playerss[linha].x,(float)playerss[linha].y,0);
+			}else if(vary==0){
+				al_draw_bitmap_region(Cazeh,14,14,tamanhox,tamanhoy,(float)playerss[linha].x,(float)playerss[linha].y,0);				
+			}
+
+			if(vary<0){
+				al_draw_bitmap_region(Cazeh,xinicial,28,tamanhox,tamanhoy,(float)playerss[linha].x,(float)playerss[linha].y,0);				
+			}else if(varx==0){
+				al_draw_bitmap_region(Cazeh,14,28,tamanhox,tamanhoy,(float)playerss[linha].x,(float)playerss[linha].y,0);								
+			}
+
+			if(vary>0){
+				al_draw_bitmap_region(Cazeh,xinicial,42,tamanhox,tamanhoy,(float)playerss[linha].x,(float)playerss[linha].y,0);				
+			}else if(vary==0){
+				al_draw_bitmap_region(Cazeh,14,42,tamanhox,tamanhoy,(float)playerss[linha].x,(float)playerss[linha].y,0);				
+			}
+
+		}
+
+	}
+
+
+	al_flip_display();
+
+
+ }
+
+void Atualizar_frames(JOGADORES *player){
+	if(player->comedor == 'C'){
+		player->maxFrame=3;
+	}else{
+		player->maxFrame=2;
+	}
+
+	if(++player->frameCount >= FRAMEDELAY){
+		if(++player->curFrame >= player->maxFrame){
+			player->curFrame=0;
+		}
+
+		player->frameCount=0;
+
+		player->x_old=player->x;
+		player->y_old=player->y;
+
+		player->x -= key[A]*VEL;
+		player->x += key[D]*VEL;
+		player->y -= key[W]*VEL;
+		player->y += key[S]*VEL;
+
+		if(player->x <=0 - al_get_bitmap_width(player->sprite)/player->maxFrame)
+			player ->x = MAXTRIZ-1;
+		if(player->x <=0 + al_get_bitmap_width(player->sprite)/player->maxFrame)
+			player ->x = 0;
+		if(player->y <=0 - al_get_bitmap_height(player->sprite)/4)
+			player ->y = MAXTRIZ-1;
+		if(player->y <=0 + al_get_bitmap_height(player->sprite)/4)
+			player ->y = 0;
+
+	}
+}
 
 void mecanica(JOGADORES * player){
+	/*
 	char move;
 	move=getch();
 	move=(char)toupper(move);
@@ -311,6 +563,59 @@ void mecanica(JOGADORES * player){
 		}
 		
 	}	
+	*/
+	while(!al_is_event_queue_empty(fila_keyboard)){
+
+		al_wait_for_event(fila_keyboard,&ev);
+	
+
+		if(ev.type==ALLEGRO_EVENT_KEY_DOWN){
+			switch(ev.keyboard.keycode){
+				case ALLEGRO_KEY_ESCAPE:
+					exit(EXIT_SUCCESS);
+					break;
+				case ALLEGRO_KEY_W:
+					key[W]=true;
+					break;
+				case ALLEGRO_KEY_A:
+					key[A]=true;
+					break;
+				case ALLEGRO_KEY_S:
+					key[S]=true;
+					break;
+				case ALLEGRO_KEY_D:
+					key[D]=true;
+					break;
+
+			}
+		}else if(ev.type==ALLEGRO_EVENT_KEY_UP){
+			switch(ev.keyboard.keycode){
+				case ALLEGRO_KEY_ESCAPE:
+					exit(EXIT_SUCCESS);
+					break;
+				case ALLEGRO_KEY_W:
+					key[W]=false;
+					break;
+				case ALLEGRO_KEY_A:
+					key[A]=false;
+					break;
+				case ALLEGRO_KEY_S:
+					key[S]=false;
+					break;
+				case ALLEGRO_KEY_D:
+					key[D]=false;
+					break;
+
+			}
+		}else if(ev.type==ALLEGRO_EVENT_DISPLAY_CLOSE){
+			exit(0);
+		}else if(ev.type==ALLEGRO_EVENT_TIMER){
+			Atualizar_frames(player);
+		}
+		
+	}
+	
+
 }
 
 void Wait(void){
@@ -325,7 +630,7 @@ void Wait(void){
 }
 
 
-void printanatela(char matriz[MAXTRIZ][MAXTRIZ],JOGADORES * jogador){
+/*void printanatela(char matriz[MAXTRIZ][MAXTRIZ],JOGADORES * jogador){
 	register int linha,coluna,linhal;
 	for(linha=0;linha<MAXTRIZ;linha++){
 		for(coluna=0;coluna<MAXTRIZ;coluna++){
@@ -353,7 +658,7 @@ void printanatela(char matriz[MAXTRIZ][MAXTRIZ],JOGADORES * jogador){
 	}
 	
 	
-}
+}*/
 void atualiza_meu_player(JOGADORES*playerss,JOGADORES *player){
 	register int linha;
 	for(linha=0;linha<MAX_PLAYERS;linha++){
@@ -364,7 +669,7 @@ void atualiza_meu_player(JOGADORES*playerss,JOGADORES *player){
 }
 
 int main(void){
-	char matriz[MAXTRIZ][MAXTRIZ]={" "};
+	//char matriz[MAXTRIZ][MAXTRIZ]={" "};
 	JOGADORES playerss[MAX_PLAYERS];
 	JOGADORES player;
 	char msg[NOME_MAX];
@@ -373,7 +678,9 @@ int main(void){
 
 	InicializarAllegro();
 	Carregar_bitmaps();
-	InitJanela();	
+	InitJanela();
+	Registra_timer();
+	Registra_fila_keyboard();	
 
 	apresentacao();
 
@@ -399,6 +706,7 @@ int main(void){
 	recvMsgFromServer(&jogo,WAIT_FOR_IT);
 
 	Wait();
+
 	while(jogo){
 		
 		mecanica(&player);
@@ -419,10 +727,7 @@ int main(void){
 
 		aux=recvMsgFromServer(playerss,WAIT_FOR_IT);
 			if(aux==SERVER_DISCONNECTED){
-				puts("--------------------------------\n");
-				puts("-----------Voce morreu----------\n");
-				puts("--------------------------------\n");
-				exit(EXIT_FAILURED);
+				return 9;
 			}else{
 				if(aux==NO_MESSAGE){
 					puts("---------------------------------------------\n");
@@ -436,14 +741,13 @@ int main(void){
 		recvMsgFromServer(&vitoria,WAIT_FOR_IT);
 
 		if(!vitoria){
-			puts("---------------------------\n");
-			puts("_________Voce ganhou!_______");
-			puts("---------------------------\n");
-			exit(EXIT_SUCCESS);
+			return 8;
 		}
 
 		system("clear");
-		printanatela(matriz,playerss);
+		//printanatela(matriz,playerss);
+		Printar_tela_over_power(playerss);
+
 	}
 
 	Destruir();
