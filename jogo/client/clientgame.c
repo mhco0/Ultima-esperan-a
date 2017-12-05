@@ -1123,7 +1123,7 @@ int vencedor(){
 
 	if(x<132 && eventoTimer.type == ALLEGRO_EVENT_TIMER) x+=2;
 
-	if(y>=210) retorno=0;
+	if(y>=250) retorno=4;
 
 	return retorno;
 }
@@ -1145,7 +1145,7 @@ int perdedor(){
 
 	if(x<132 && eventoTimer.type == ALLEGRO_EVENT_TIMER) x+=2;
 
-	if(y>=210) retorno=0;
+	if(y>=250) retorno=4;
 
 	return retorno;
 }
@@ -1184,7 +1184,7 @@ int jogo(JOGADORES *player, JOGADORES playerss[MAX_PLAYERS], int *vitoria){
 
 		recvMsgFromServer(vitoria,WAIT_FOR_IT);
 
-		if(!*(vitoria)){
+		if(*vitoria==0){
 			return 8;
 		}
 
