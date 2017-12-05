@@ -86,20 +86,20 @@ void rand_move(JOGADORES * player){
 	for(linha=0;linha<MAX_PLAYERS;linha++){
 		switch(player[linha].id){
 			case 0:
-				player[linha].x=30;
-				player[linha].y=30;
+				player[linha].x=35;
+				player[linha].y=35;
 			break;
 			case 1:
-				player[linha].x=MAXTRIZ-30;
-				player[linha].y=MAXTRIZ-30;
+				player[linha].x=MAXTRIZ-35;
+				player[linha].y=MAXTRIZ-35;
 			break;
 			case 2:
-				player[linha].x=30;
-				player[linha].y=MAXTRIZ-30;
+				player[linha].x=35;
+				player[linha].y=MAXTRIZ-35;
 			break;
 			case 3:
-				player[linha].x=MAXTRIZ-30;
-				player[linha].y=30;
+				player[linha].x=MAXTRIZ-35;
+				player[linha].y=35;
 			break;
 			default:puts("Tivemos um erro inesperado.");
 					exit(EXIT_FAILURED);
@@ -145,13 +145,13 @@ void validar_os_movimentos(JOGADORES*jogadores,char matriz[MAXTRIZ][MAXTRIZ]){
 			}
 		}
 
-		if(jogadores[linha].x < 0){
+		if(jogadores[linha].x <= 5){
 			if(jogadores[linha].y>184 && jogadores[linha].y < 210){
 				jogadores[linha].x = MAXTRIZ-1;
 			}
 		}
 
-		if(jogadores[linha].x > MAXTRIZ-1){
+		if(jogadores[linha].x > MAXTRIZ-5){
 			if(jogadores[linha].y>184 && jogadores[linha].y < 210){
 				jogadores[linha].x = 0;
 			}
@@ -279,7 +279,7 @@ int main(void){
 	jogo=1;
 
 	while(jogo){
-		while(regina <=120){
+		while(regina <=200){
 			rejectConnection();
 			for(linha=0;linha<MAX_PLAYERS;linha++){
 				recvMsgFromClient(&player[linha],linha,WAIT_FOR_IT);
@@ -288,11 +288,11 @@ int main(void){
 			validar_os_movimentos(player,matriz);
 
 			mortes=organiza_quem_morreu(player);
-			if(regina==120){
+			if(regina==200){
 				quem_eh_a_cazeh(player);
 			}
 
-			broadcast(player,4*sizeof(JOGADORES));
+			broadcast(player,MAX_PLAYERS*sizeof(JOGADORES));
 
 			if(mortes==MAX_PLAYERS-1){
 				vitoria=0;

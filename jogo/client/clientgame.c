@@ -43,7 +43,7 @@
 #define APT 50
 #define NOME_MAX 255
 
-#define FPS 60
+#define FPS 65
 
 #define VEL 10
 
@@ -746,20 +746,20 @@ void getJogador(int id, JOGADORES *jogadorNovo, char nome[20]){
 
 	switch(jogadorNovo->id){
 			case 0:
-				jogadorNovo->x=30;
-				jogadorNovo->y=30;
+				jogadorNovo->x=35;
+				jogadorNovo->y=35;
 			break;
 			case 1:
-				jogadorNovo->x=MAXTRIZ-30;
-				jogadorNovo->y=MAXTRIZ-30;
+				jogadorNovo->x=MAXTRIZ-35;
+				jogadorNovo->y=MAXTRIZ-35;
 			break;
 			case 2:
-				jogadorNovo->x=30;
-				jogadorNovo->y=MAXTRIZ-30;
+				jogadorNovo->x=35;
+				jogadorNovo->y=MAXTRIZ-35;
 			break;
 			case 3:
-				jogadorNovo->x=MAXTRIZ-30;
-				jogadorNovo->y=30;
+				jogadorNovo->x=MAXTRIZ-35;
+				jogadorNovo->y=35;
 			break;
 			default:puts("Tivemos um erro inesperado.");
 					exit(EXIT_FAILURED);
@@ -1110,7 +1110,7 @@ int salaDeEspera(JOGADORES *player, int *jogar){
 	return 7;
 }
 
-int vencedor(){
+int vencedor(void){
 	int retorno = 8;
 	static int x = -522;
 	static int y = 0;
@@ -1132,7 +1132,7 @@ int vencedor(){
 	return retorno;
 }
 
-int perdedor(){
+int perdedor(void){
 	int retorno = 9;
 	static int x = -522;
 	static int y = 0;
