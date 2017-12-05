@@ -5,6 +5,14 @@
 #include <time.h>
 #include <ctype.h>
 #include <math.h>
+#include <allegro5/allegro.h>
+#include <allegro5/allegro_primitives.h>
+#include <allegro5/allegro_image.h>
+#include <allegro5/allegro_audio.h>
+#include <allegro5/allegro_acodec.h>
+#include <allegro5/allegro_font.h>
+#include <allegro5/allegro_ttf.h>
+#include <allegro5/allegro_native_dialog.h>
 
 #ifndef EXIT_SUCCESS
  	#define EXIT_SUCCESS 0
@@ -28,15 +36,17 @@
 	#define SERVER_TIMEOUT 4
 #endif
 
-#define MAXTRIZ 20
+#define MAXTRIZ 420
 #define MAXIP 20
 #define APT 50
 #define NOME_MAX 255
 
-#define MAX_PLAYERS 4
+#define MAX_PLAYERS 2
 
 typedef struct JOGADORES{
 	char nome;
+	int x_old;
+	int y_old;
 	int x;
 	int y;
 	int id;
@@ -50,6 +60,61 @@ enum conn_ret_t testconnect(void){
 	scanf(" %[^\n]",ip);
 	getchar();
 	return connectToServer(ip);
+}
+
+ALLEGRO_DISPLAY * janela=NULL;
+
+// ALLEGRO_BITMAP * Cazeh=NULL, * player1=NULL,* player2=NULL,* player3=NULL, * player4=NULL;
+ ALLEGRO_BITMAP * Fundo=NULL;
+
+void Carregar_bitmaps(void){
+	Fundo=al_load_bitmap("jogo/client/imagem/mapalimpo.png");
+	if(Fundo==NULL){
+		puts("Tivemos um problema ao alocar o Fundo.");
+		exit(-1);
+	}
+}
+
+void Destruir(void){
+	al_destroy_display(janela);
+}
+
+void InicializarAllegro(void){
+	if(!al_init()){
+		puts("Tivemos um erro em inicializar a Allegro5.");
+		exit(-1);	
+	}
+
+	if(!al_init_image_addon()){
+		puts("Tivemos um erro em iniciar imagens da Allegro5");
+		exit(-1);
+	}
+	// al_install_audio();
+	// al_init_acodec_addon();
+	// al_reserve_samples(1);
+	// al_init_font_addon();
+	// al_init_ttf_addon();
+	// al_install_keyboard();
+	// al_install_mouse();
+	// al_init_primitives_addon();
+}
+
+void InitJanela(void){
+
+	janela = al_create_display(MAXTRIZ, MAXTRIZ);
+
+	if(janela==NULL){
+		puts("Janela nao alocada");
+		exit(-1);
+	}
+
+	al_set_window_title(janela, "Last Hope");
+
+	al_clear_to_color(al_map_rgb(0, 0, 0));
+	al_draw_bitmap(Fundo,0,0,0);
+   	al_flip_display();
+
+
 }
 
 void Menu(void){
@@ -211,7 +276,8 @@ void getJogador(int id, JOGADORES *jogadorNovo){
 
 	jogadorNovo->x=rand()%MAXTRIZ-1;
 	jogadorNovo->y=rand()%MAXTRIZ-1;
-
+	jogadorNovo->x_old=jogadorNovo->x;
+	jogadorNovo->y_old=jogadorNovo->y;
 }
 
 void selecionarPersonagem(int id, JOGADORES *jogadorNovo){
@@ -228,13 +294,17 @@ void mecanica(JOGADORES * player){
 	if(move!=NO_KEY_PRESSED){
 			
 		switch(move){
-			case 'W':(player->y)-=1;
+			case 'W':(player->y_old)=(player->y);
+			(player->y)-=1;
 			break;
-			case 'A':(player->x)-=1;
+			case 'A':(player->x_old)=(player->x);
+			(player->x)-=1;
 			break;
-			case 'D':(player->x)+=1;
+			case 'D':(player->x_old)=(player->x);
+			(player->x)+=1;
 			break;
-			case 'S':(player->y)+=1;
+			case 'S':(player->y_old)=(player->y);
+			(player->y)+=1;
 			break;
 			default:
 			break;
@@ -249,7 +319,6 @@ void Wait(void){
 	 puts("iniciando jogo.");
 	 for(contador=5;contador>0;contador--){
 	 	for(linha=0;linha<640000000;linha++);
-
 	 	printf("%d\n",contador);
 	 }
 
@@ -302,7 +371,9 @@ int main(void){
 	int vitoria=1;
 	//int maximo=MAX_PLAYERS;
 
-	
+	InicializarAllegro();
+	Carregar_bitmaps();
+	InitJanela();	
 
 	apresentacao();
 
@@ -322,8 +393,6 @@ int main(void){
 	int jogo=0,aux;
 
 	sendMsgToServer(&player,sizeof(JOGADORES));
-
-	puts("Esperando resposta do servidor.");
 
 	recvMsgFromServer(&player,WAIT_FOR_IT);
 
@@ -376,6 +445,9 @@ int main(void){
 		system("clear");
 		printanatela(matriz,playerss);
 	}
+
+	Destruir();
+
 
 	return 0;
 }

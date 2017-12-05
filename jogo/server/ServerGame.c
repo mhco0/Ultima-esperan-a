@@ -12,16 +12,18 @@
 	#define EXIT_FAILURED 1
 #endif
 
-#define MAXTRIZ 20
+#define MAXTRIZ 420
 #define MAXIP 20
 #define APT 50
 #define NOME_MAX 255
 
-#define MAX_PLAYERS 4
+#define MAX_PLAYERS 2
 
 
 typedef struct JOGADORES{
 	char nome;
+	int x_old;
+	int y_old;
 	int x;
 	int y;
 	int id;
@@ -54,37 +56,71 @@ void quem_eh_a_cazeh(JOGADORES * player){
 	
 }
 
-void rand_move(JOGADORES * player){
+void rand_move(JOGADORES * player, matriz[MAXTRIZ][MAXTRIZ]){
 	register int linha;
 	srand((unsigned)time(NULL));
 
 	for(linha=0;linha<MAX_PLAYERS;linha++){
 		player[linha].x=rand()%MAXTRIZ;
 		player[linha].y=rand()%MAXTRIZ;
+		if(matriz[player[linha].y][player[linha].x] == 1){
+			do{
+				player[linha].x=rand()%MAXTRIZ;
+				player[linha].y=rand()%MAXTRIZ;
+			}while(matriz[player[linha].y][player[linha].x] == 1);
+		}
 	}
 
 }
 
-void validar_os_movimentos(JOGADORES*jogadores){
-	register int linha;
-
-	for(linha=0;linha<MAX_PLAYERS;linha++){
-		if(jogadores[linha].x>MAXTRIZ-1){
-			jogadores[linha].x=19;
-		}
-		if(jogadores[linha].x<0){
-			jogadores[linha].x=0;
-
-		}
-		if(jogadores[linha].y>MAXTRIZ-1){
-			jogadores[linha].y=19;
-
-		}
-		if(jogadores[linha].y<0){
-			jogadores[linha].y=0;
-
-		}
+void initMatriz(char matriz[MAXTRIZ][MAXTRIZ]){
+	register int linha=0,coluna=0;
+	FILE * arq;
+	arq=fopen("jogo/client/imagem/mapa.txt","rt");
+	if(arq==NULL){
+		puts("Nao conseguimos acessar o arquivo da matriz");
+		exit(EXIT_FAILURED);
 	}
+	while(fscanf(arq,"%[^\n]\n",matriz[linha++])!=EOF);
+
+	fclose(arq);
+
+	for(linha=0;linha<MAXTRIZ;linha++){
+		for(coluna=0;coluna<MAXTRIZ;coluna++){
+			printf("%c",matriz[linha][coluna]);
+		}
+		printf("\n");
+	}
+
+
+}
+
+void validar_os_movimentos(JOGADORES*jogadores,char matriz[MAXTRIZ][MAXTRIZ]){
+	register int linha;
+	for(linha=0;linha<MAX_PLAYERS;linha++){
+		if(matriz[jogadores[linha].y][jogadores[linha].x]==1){
+			if(matriz[jogadores[linha].y_old][jogadores[linha].x]==0){
+				jogadores[linha].y=jogadores[linha].y_old;
+			}else if(matriz[jogadores[linha].y][jogadores[linha].x_old]==0){
+				jogadores[linha].x=jogadores[linha].x_old;
+			}
+		}
+
+		if(jogadores[linha].x < 0){
+			if(jogadores[linha].y>185 && jogadores[linha].y < 209){
+				jogadores[linha].x = MAXTRIZ-1;
+			}
+		}
+
+		if(jogadores[linha].x > MAXTRIZ-1){
+			if(jogadores[linha].y>185 && jogadores[linha].y < 209){
+				jogadores[linha].x = 0;
+			}
+		}
+		
+
+	}
+
 }
 
 int organiza_quem_morreu(JOGADORES *jogadores){
@@ -169,11 +205,15 @@ void iniciarJogo(JOGADORES * player){
 
 
 int main(void){
+	serverInit(MAX_PLAYERS);
+
 	register int linha;
 	int jogo=0,mortes=0,vitoria=1;
 	JOGADORES player[MAX_PLAYERS];
+	char matriz[MAXTRIZ][MAXTRIZ];
 
-	serverInit(MAX_PLAYERS);
+	initMatriz(matriz);
+
 	int regina=0;
 
 	puts("Server is Running");
@@ -202,14 +242,14 @@ int main(void){
 				recvMsgFromClient(&player[linha],linha,WAIT_FOR_IT);
 			}
 
-			validar_os_movimentos(player);
+			validar_os_movimentos(player,matriz);
 
 			mortes=organiza_quem_morreu(player);
 			if(regina==120){
 				quem_eh_a_cazeh(player);
 			}
 
-			broadcast(player,4*sizeof(JOGADORES));
+			broadcast(player,2*sizeof(JOGADORES));
 
 			if(mortes==MAX_PLAYERS-1){
 				vitoria=0;
